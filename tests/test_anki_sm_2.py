@@ -9,18 +9,20 @@ class TestAnkiSM2:
 
         card = Card()
 
-        # card is json-serializable
+        # card and scheduler are json-serializable
         assert type(json.dumps(card.to_dict())) == str
-
-        # TODO: test that scheduler is json-serializable
-        #assert type(json.dumps(scheduler.to_dict())) == str
+        assert type(json.dumps(scheduler.to_dict())) == str
 
         card_dict = card.to_dict()
         copied_card = Card.from_dict(card_dict)
         assert vars(card) == vars(copied_card)
         assert card.to_dict() == copied_card.to_dict()
 
-        # TODO: show that scheduler can be serialized and deserialized while remaining the same
+        # scheduler can be serialized and de-serialized while remaining the same
+        scheduler_dict = scheduler.to_dict()
+        copied_scheduler = AnkiSM2Scheduler.from_dict(scheduler_dict)
+        assert vars(scheduler) == vars(copied_scheduler)
+        assert scheduler.to_dict() == copied_scheduler.to_dict()
 
         rating = Rating.Good
         _, review_log = scheduler.review_card(card, rating)

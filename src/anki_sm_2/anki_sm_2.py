@@ -110,12 +110,47 @@ class ReviewLog:
 
         return ReviewLog(card=card, rating=rating, review_datetime=review_datetime)
 
-# TODO: implement scheduler class
+
 class AnkiSM2Scheduler:
     
-    # TODO: implement __init__
-    def __init__(self):
-        pass
+    learning_steps: list[str]
+    graduating_interval: int
+    easy_interval: int
+
+    relearning_steps: list[str]
+    minimum_interval: int
+
+    maximum_interval: int
+    starting_ease: float
+    easy_bonus: float
+    interval_modifier: float
+    hard_interval: float
+    new_interval: float
+
+    def __init__(self, 
+                 learning_steps: list[str] = ['1m', '10m'],
+                 graduating_interval: int = 1,
+                 easy_interval: int = 4,
+                 relearning_steps: list[str] = ['10m'],
+                 minimum_interval: int = 1,
+                 maximum_interval: int = 36500,
+                 starting_ease: float = 2.5,
+                 easy_bonus: float = 1.3,
+                 interval_modifier: float = 1.0,
+                 hard_interval: float = 1.2,
+                 new_interval: float = 0.0):
+        
+        self.learning_steps = learning_steps
+        self.graduating_interval = graduating_interval
+        self.easy_interval = easy_interval
+        self.relearning_steps = relearning_steps
+        self.minimum_interval = minimum_interval
+        self.maximum_interval = maximum_interval
+        self.starting_ease = starting_ease
+        self.easy_bonus = easy_bonus
+        self.interval_modifier = interval_modifier
+        self.hard_interval = hard_interval
+        self.new_interval = new_interval
 
     # TODO: implement review_card
     def review_card(self, card: Card, rating: Rating, review_datetime: Optional[datetime]=None):
@@ -127,11 +162,50 @@ class AnkiSM2Scheduler:
 
         return None, review_log
     
-    # TODO: implement to_dict
     def to_dict(self):
-        pass
+        
+        return_dict = {
+            "learning_steps": self.learning_steps,
+            "graduating_interval": self.graduating_interval,
+            "easy_interval": self.easy_interval,
+            "relearning_steps": self.relearning_steps,
+            "minimum_interval": self.minimum_interval,
+            "maximum_interval": self.maximum_interval,
+            "starting_ease": self.starting_ease,
+            "easy_bonus": self.easy_bonus,
+            "interval_modifier": self.interval_modifier,
+            "hard_interval": self.hard_interval,
+            "new_interval": self.new_interval
+        }
+
+        return return_dict
 
     # TODO: implement from_dict
     @staticmethod
-    def from_dict():
-        pass
+    def from_dict(source_dict):
+        
+        learning_steps = source_dict['learning_steps']
+        graduating_interval = source_dict['graduating_interval']
+        easy_interval = source_dict['easy_interval']
+        relearning_steps = source_dict['relearning_steps']
+        minimum_interval = source_dict['minimum_interval']
+        maximum_interval = source_dict['maximum_interval']
+        starting_ease = source_dict['starting_ease']
+        easy_bonus = source_dict['easy_bonus']
+        interval_modifier = source_dict['interval_modifier']
+        hard_interval = source_dict['hard_interval']
+        new_interval = source_dict['new_interval']
+
+        return AnkiSM2Scheduler(
+                    learning_steps = learning_steps,
+                    graduating_interval = graduating_interval,
+                    easy_interval = easy_interval,
+                    relearning_steps = relearning_steps,
+                    minimum_interval = minimum_interval,
+                    maximum_interval = maximum_interval,
+                    starting_ease = starting_ease,
+                    easy_bonus = easy_bonus,
+                    interval_modifier = interval_modifier,
+                    hard_interval = hard_interval,
+                    new_interval = new_interval
+        )
