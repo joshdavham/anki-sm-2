@@ -1,5 +1,5 @@
 from enum import IntEnum
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from copy import deepcopy
 
@@ -113,11 +113,11 @@ class ReviewLog:
 
 class AnkiSM2Scheduler:
     
-    learning_steps: list[str]
+    learning_steps: list[timedelta]
     graduating_interval: int
     easy_interval: int
 
-    relearning_steps: list[str]
+    relearning_steps: list[timedelta]
     minimum_interval: int
 
     maximum_interval: int
@@ -128,10 +128,10 @@ class AnkiSM2Scheduler:
     new_interval: float
 
     def __init__(self, 
-                 learning_steps: list[str] = ['1m', '10m'],
+                 learning_steps: list[timedelta] = [timedelta(minutes=1), timedelta(minutes=10)],
                  graduating_interval: int = 1,
                  easy_interval: int = 4,
-                 relearning_steps: list[str] = ['10m'],
+                 relearning_steps: list[timedelta] = [timedelta(minutes=10)],
                  minimum_interval: int = 1,
                  maximum_interval: int = 36500,
                  starting_ease: float = 2.5,
@@ -165,10 +165,10 @@ class AnkiSM2Scheduler:
     def to_dict(self):
         
         return_dict = {
-            "learning_steps": self.learning_steps,
+            "learning_steps": [int(learning_step.total_seconds()) for learning_step in self.learning_steps],
             "graduating_interval": self.graduating_interval,
             "easy_interval": self.easy_interval,
-            "relearning_steps": self.relearning_steps,
+            "relearning_steps": [int(relearning_step.total_seconds()) for relearning_step in self.relearning_steps],
             "minimum_interval": self.minimum_interval,
             "maximum_interval": self.maximum_interval,
             "starting_ease": self.starting_ease,
@@ -180,14 +180,13 @@ class AnkiSM2Scheduler:
 
         return return_dict
 
-    # TODO: implement from_dict
     @staticmethod
     def from_dict(source_dict):
         
-        learning_steps = source_dict['learning_steps']
+        learning_steps = [timedelta(seconds=learning_step) for learning_step in source_dict['learning_steps']]
         graduating_interval = source_dict['graduating_interval']
         easy_interval = source_dict['easy_interval']
-        relearning_steps = source_dict['relearning_steps']
+        relearning_steps = [timedelta(seconds=relearning_step) for relearning_step in source_dict['relearning_steps']]
         minimum_interval = source_dict['minimum_interval']
         maximum_interval = source_dict['maximum_interval']
         starting_ease = source_dict['starting_ease']
