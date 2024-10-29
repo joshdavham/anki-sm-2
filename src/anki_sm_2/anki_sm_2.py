@@ -1,6 +1,7 @@
 from enum import IntEnum
 from datetime import datetime, timezone
 from typing import Optional
+from copy import deepcopy
 
 class State(IntEnum):
 
@@ -78,10 +79,59 @@ class Card:
 
         return Card(card_id=card_id, state=state, step=step, ease=ease, due=due, current_interval=current_interval)
 
-# TODO: implement ReviewLog class
 class ReviewLog:
-    pass
+    
+    card: Card
+    rating: Rating
+    review_datetime: datetime
+
+    def __init__(self, card: Card, rating: Rating, review_datetime: datetime) -> None:
+
+        self.card = deepcopy(card)
+        self.rating = rating
+        self.review_datetime = review_datetime
+
+    def to_dict(self):
+
+        return_dict = {
+            "card": self.card.to_dict(),
+            "rating": self.rating.value,
+            "review_datetime": self.review_datetime.isoformat()
+        }
+
+        return return_dict
+    
+    @staticmethod
+    def from_dict(source_dict) -> "ReviewLog":
+
+        card = Card.from_dict(source_dict['card'])
+        rating = Rating(int(source_dict['rating']))
+        review_datetime = datetime.fromisoformat(source_dict['review_datetime'])
+
+        return ReviewLog(card=card, rating=rating, review_datetime=review_datetime)
 
 # TODO: implement scheduler class
 class AnkiSM2Scheduler:
-    pass
+    
+    # TODO: implement __init__
+    def __init__(self):
+        pass
+
+    # TODO: implement review_card
+    def review_card(self, card: Card, rating: Rating, review_datetime: Optional[datetime]=None):
+
+        if review_datetime is None:
+            review_datetime = datetime.now()
+
+        review_log = ReviewLog(card=card, rating=rating, review_datetime=review_datetime)
+
+        return None, review_log
+    
+    # TODO: implement to_dict
+    def to_dict(self):
+        pass
+
+    # TODO: implement from_dict
+    @staticmethod
+    def from_dict():
+        pass
