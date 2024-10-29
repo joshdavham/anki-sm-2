@@ -21,7 +21,7 @@ class Card:
     card_id: int
     state: State
     step: Optional[int]
-    ease: float
+    ease: Optional[float]
     due: datetime
     current_interval: Optional[int]
 
@@ -30,7 +30,7 @@ class Card:
                  card_id: Optional[int]=None,
                  state: State=State.Learning,
                  step: Optional[int]=None,
-                 ease: float=2.5,
+                 ease: Optional[float]=None,
                  due: Optional[datetime]=None,
                  current_interval: Optional[int]=None
                  ) -> None:
@@ -44,6 +44,8 @@ class Card:
 
         self.state = state
 
+        if self.state == State.Learning and step is None:
+            step = 0
         self.step = step
 
         self.ease = ease
@@ -73,7 +75,7 @@ class Card:
         card_id = int(source_dict['card_id'])
         state = State(int(source_dict['state']))
         step = source_dict['step']
-        ease = float(source_dict['ease'])
+        ease = source_dict['ease']
         due = datetime.fromisoformat(source_dict['due'])
         current_interval = source_dict['current_interval']
 
@@ -152,15 +154,62 @@ class AnkiSM2Scheduler:
         self.hard_interval = hard_interval
         self.new_interval = new_interval
 
-    # TODO: implement review_card
     def review_card(self, card: Card, rating: Rating, review_datetime: Optional[datetime]=None):
 
+        card = deepcopy(card)
+
         if review_datetime is None:
-            review_datetime = datetime.now()
+            review_datetime = datetime.now(timezone.utc)
 
         review_log = ReviewLog(card=card, rating=rating, review_datetime=review_datetime)
 
-        return None, review_log
+        if card.state == State.Learning:
+
+            if rating == Rating.Again:
+
+                card.step = 0
+                card.due = review_datetime + self.learning_steps[card.step]
+
+            elif rating == Rating.Hard:
+
+                # card step stays the same
+
+                if card.step == 0 and len(self.learning_steps) >= 2:
+                    card.due = review_datetime + ( (self.learning_steps[card.step] + self.learning_steps[card.step+1]) / 2.0 )
+                else:
+                    card.due = review_datetime + timedelta(self.learning_steps[card.step])
+
+            elif rating == Rating.Good:
+
+                if card.step+1 == len(self.learning_steps): # the last step
+                    
+                    card.state = State.Review
+                    card.step = None
+                    card.ease = self.starting_ease
+                    card.current_interval = self.graduating_interval
+                    card.due = review_datetime + timedelta(days=card.current_interval)
+
+                else:
+                    
+                    card.step += 1
+                    card.due = review_datetime + self.learning_steps[card.step]
+
+            elif rating == Rating.Easy:
+
+                card.state = State.Review
+                card.step = None
+                card.ease = self.starting_ease
+                card.current_interval = self.easy_interval
+                card.due = review_datetime + timedelta(days=card.current_interval)
+
+        elif card.state == State.Review:
+            # TODO: implement Review state reviewing
+            pass
+        elif card.state == State.Relearing:
+            # TODO: implement Relearning state reviewing
+            pass
+
+        return card, review_log
     
     def to_dict(self):
         

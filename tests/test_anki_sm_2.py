@@ -1,7 +1,86 @@
-from anki_sm_2 import AnkiSM2Scheduler, Card, Rating, ReviewLog
+from datetime import datetime, timezone, timedelta
+from anki_sm_2 import AnkiSM2Scheduler, Card, Rating, ReviewLog, State
 import json
 
 class TestAnkiSM2:
+
+    def test_good_learning_steps(self):
+
+        scheduler = AnkiSM2Scheduler()
+
+        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
+        card = Card(created_at=created_at)
+
+        assert card.state == State.Learning
+        assert card.step == 0
+
+        rating = Rating.Good
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Learning
+        assert card.step == 1
+        assert round((card.due - created_at).total_seconds() / 100) == 6 # card is due in approx. 10 minutes (600 seconds)
+
+        rating = Rating.Good
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+        assert card.state == State.Review
+        assert card.step == None
+        assert round((card.due - created_at).total_seconds() / 3600) == 24
+
+
+    def test_again_learning_steps(self):
+
+        scheduler = AnkiSM2Scheduler()
+
+        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
+        card = Card(created_at=created_at)        
+
+        assert card.state == State.Learning
+        assert card.step == 0
+
+        rating = Rating.Again
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Learning
+        assert card.step == 0
+        assert round((card.due - created_at).total_seconds() / 10) == 6 # card is due in approx. 1 minute (60 seconds)
+
+
+    def test_hard_learning_steps(self):
+
+        scheduler = AnkiSM2Scheduler()
+
+        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
+        card = Card(created_at=created_at)    
+
+        assert card.state == State.Learning
+        assert card.step == 0
+
+        rating = Rating.Hard
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Learning
+        assert card.step == 0
+        assert round((card.due - created_at).total_seconds() / 10) == 33 # card is due in approx. 5.5 minutes (330 seconds)
+
+
+    def test_easy_learning_steps(self):
+
+        scheduler = AnkiSM2Scheduler()
+
+        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
+        card = Card(created_at=created_at)    
+
+        assert card.state == State.Learning
+        assert card.step == 0
+
+        rating = Rating.Easy
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Review
+        assert card.step == None
+        assert round((card.due - created_at).total_seconds() / 86400) == 4 # card is due in approx. 4 days
+
 
     def test_serialize(self):
 
