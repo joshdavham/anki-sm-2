@@ -82,6 +82,39 @@ class TestAnkiSM2:
         assert card.step == None
         assert round((card.due - created_at).total_seconds() / 86400) == 4 # card is due in approx. 4 days
 
+    def test_review_state(self):
+
+        scheduler = AnkiSM2Scheduler()
+
+        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
+        card = Card(created_at=created_at)
+
+        rating = Rating.Good
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        rating = Rating.Good
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Review
+        assert card.step == None
+
+        prev_due = card.due
+        rating = Rating.Good
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Review
+        assert card.current_interval == 2
+        assert round((card.due - prev_due).total_seconds() / 3600) == 48 # card is due in 2 days
+
+        # rate the card again
+        prev_due = card.due
+        rating = Rating.Again
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
+
+        assert card.state == State.Relearing
+        assert card.current_interval == 1
+        assert round((card.due - prev_due).total_seconds() / 3600) == 24 # card is due in 1 day
+
 
     def test_serialize(self):
 
