@@ -203,8 +203,52 @@ class AnkiSM2Scheduler:
                 card.due = review_datetime + timedelta(days=card.current_interval)
 
         elif card.state == State.Review:
-            # TODO: implement Review state reviewing
-            pass
+
+            # TODO: add fuzz
+
+            if rating == Rating.Again:
+
+                card.state = State.Relearing
+                card.step = 0
+                card.ease = max(1.3, card.ease * 0.80) # reduce ease by 20%
+                card.current_interval = max( self.minimum_interval, round(card.current_interval * self.new_interval * self.interval_modifier) )
+                card.due = review_datetime + timedelta(days=card.current_interval)
+
+            elif rating == Rating.Hard:
+
+                card.ease = max(1.3, card.ease * 0.85) # reduce ease by 15%
+                card.current_interval = min( self.maximum_interval, round(card.current_interval * self.hard_interval * self.interval_modifier) )
+                card.due = review_datetime + timedelta(days=card.current_interval)
+
+            elif rating == Rating.Good:
+
+                # ease stays the same
+
+                days_overdue = (review_datetime - card.due).days
+                if days_overdue >= 1:
+
+                    card.current_interval = min( self.maximum_interval, round(( card.current_interval + (days_overdue / 2.0) ) * card.ease * self.interval_modifier) )
+
+                else:
+
+                    card.current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.interval_modifier) )
+
+                card.due = review_datetime + timedelta(days=card.current_interval)
+
+            elif rating == Rating.Easy:
+
+                days_overdue = (review_datetime - card.due).days
+                if days_overdue >= 1:
+
+                    card.current_interval = min( self.maximum_interval, round(( card.current_interval + days_overdue ) * card.ease * self.easy_bonus * self.interval_modifier) )
+
+                else:
+
+                    card.current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.easy_bonus * self.interval_modifier) )
+
+                card.ease = card.ease * 1.15 # increase ease by 15%
+                card.due = review_datetime + timedelta(days=card.current_interval)
+
         elif card.state == State.Relearing:
             # TODO: implement Relearning state reviewing
             pass
