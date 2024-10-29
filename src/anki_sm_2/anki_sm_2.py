@@ -252,8 +252,46 @@ class AnkiSM2Scheduler:
                 card.due = review_datetime + timedelta(days=card.current_interval)
 
         elif card.state == State.Relearing:
-            # TODO: implement Relearning state reviewing
-            pass
+
+            if rating == Rating.Again:
+
+                card.step = 0
+                card.due = review_datetime + self.relearning_steps[card.step]
+
+            elif rating == Rating.Hard:
+
+                # card step stays the same
+
+                if card.step == 0 and len(self.relearning_steps) == 1:
+                    card.due = review_datetime + ( self.relearning_steps[card.step] * 1.5 )
+                elif card.step == 0 and len(self.relearning_steps) >= 2:
+                    card.due = review_datetime + ( (self.relearning_steps[card.step] + self.relearning_steps[card.step+1]) / 2.0 )
+                else:
+                    card.due = review_datetime + self.relearning_steps[card.step]           
+
+            elif rating == Rating.Good:
+
+                if card.step+1 == len(self.relearning_steps): # the last step
+
+                    card.state = State.Review
+                    card.step = None
+                    # don't update ease
+                    card.current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.interval_modifier) )
+                    card.due = review_datetime + timedelta(days=card.current_interval)
+
+                else:
+
+                    card.step += 1
+                    card.due = review_datetime + self.relearning_steps[card.step]
+
+            elif rating == Rating.Easy:
+
+                card.state = State.Review
+                card.step = None
+                # don't update ease
+                card.current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.easy_bonus * self.interval_modifier) )
+                card.due = review_datetime + timedelta(days=card.current_interval)
+
 
         return card, review_log
     
