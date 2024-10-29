@@ -174,10 +174,12 @@ class AnkiSM2Scheduler:
 
                 # card step stays the same
 
-                if card.step == 0 and len(self.learning_steps) >= 2:
+                if card.step == 0 and len(self.learning_steps) == 1:
+                    card.due = review_datetime + ( self.learning_steps[card.step] * 1.5 )
+                elif card.step == 0 and len(self.learning_steps) >= 2:
                     card.due = review_datetime + ( (self.learning_steps[card.step] + self.learning_steps[card.step+1]) / 2.0 )
                 else:
-                    card.due = review_datetime + timedelta(self.learning_steps[card.step])
+                    card.due = review_datetime + self.learning_steps[card.step]
 
             elif rating == Rating.Good:
 
