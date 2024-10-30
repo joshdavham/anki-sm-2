@@ -183,13 +183,15 @@ class TestAnkiSM2:
         assert scheduler.to_dict() == copied_scheduler.to_dict()
 
         rating = Rating.Good
-        card, review_log = scheduler.review_card(card, rating)
+        review_duration = 2000
+        card, review_log = scheduler.review_card(card=card, rating=rating, review_duration=review_duration)
 
         # review log is json-serializable
         assert type(json.dumps(review_log.to_dict())) == str
         review_log_dict = review_log.to_dict()
         copied_review_log = ReviewLog.from_dict(review_log_dict)
         assert review_log.to_dict() == copied_review_log.to_dict()
+        assert copied_review_log.review_duration == review_duration
         # can use the review log to recreate the card that was reviewed
         assert old_card.to_dict() == Card.from_dict(review_log.to_dict()['card']).to_dict()
         assert card.to_dict() != old_card.to_dict()
