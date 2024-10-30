@@ -1,6 +1,5 @@
 from enum import IntEnum
 from datetime import datetime, timezone, timedelta
-from typing import Optional
 from copy import deepcopy
 
 class State(IntEnum):
@@ -20,19 +19,19 @@ class Card:
     
     card_id: int
     state: State
-    step: Optional[int]
-    ease: Optional[float]
+    step: int | None
+    ease: float | None
     due: datetime
-    current_interval: Optional[int]
+    current_interval: int | None
 
     def __init__(self, 
-                 created_at: Optional[datetime]=None,
-                 card_id: Optional[int]=None,
+                 created_at: datetime | None = None,
+                 card_id: int | None = None,
                  state: State=State.Learning,
-                 step: Optional[int]=None,
-                 ease: Optional[float]=None,
-                 due: Optional[datetime]=None,
-                 current_interval: Optional[int]=None
+                 step: int | None = None,
+                 ease: float | None = None,
+                 due: datetime | None = None,
+                 current_interval: int | None = None
                  ) -> None:
         
         if created_at is None:
@@ -86,9 +85,9 @@ class ReviewLog:
     card: Card
     rating: Rating
     review_datetime: datetime
-    review_duration: Optional[int]
+    review_duration: int | None
 
-    def __init__(self, card: Card, rating: Rating, review_datetime: datetime, review_duration: Optional[int]=None) -> None:
+    def __init__(self, card: Card, rating: Rating, review_datetime: datetime, review_duration: int | None = None) -> None:
 
         self.card = deepcopy(card)
         self.rating = rating
@@ -158,7 +157,7 @@ class AnkiSM2Scheduler:
         self.hard_interval = hard_interval
         self.new_interval = new_interval
 
-    def review_card(self, card: Card, rating: Rating, review_datetime: Optional[datetime]=None, review_duration: Optional[int]=None):
+    def review_card(self, card: Card, rating: Rating, review_datetime: datetime | None = None, review_duration: int | None = None):
 
         card = deepcopy(card)
 
