@@ -1,6 +1,7 @@
 from enum import IntEnum
 from datetime import datetime, timezone, timedelta
 from copy import deepcopy
+from typing import Any
 
 class State(IntEnum):
 
@@ -55,7 +56,7 @@ class Card:
 
         self.current_interval = current_interval
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, int | float | str | None]:
 
         return_dict = {
             "card_id": self.card_id,
@@ -69,7 +70,7 @@ class Card:
         return return_dict
     
     @staticmethod
-    def from_dict(source_dict) -> "Card":
+    def from_dict(source_dict: dict[str, Any]) -> "Card":
 
         card_id = int(source_dict['card_id'])
         state = State(int(source_dict['state']))
@@ -94,7 +95,7 @@ class ReviewLog:
         self.review_datetime = review_datetime
         self.review_duration = review_duration
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, dict[str, int | float | str | None] | int | str | None]:
 
         return_dict = {
             "card": self.card.to_dict(),
@@ -106,7 +107,7 @@ class ReviewLog:
         return return_dict
     
     @staticmethod
-    def from_dict(source_dict) -> "ReviewLog":
+    def from_dict(source_dict: dict[str, Any]) -> "ReviewLog":
 
         card = Card.from_dict(source_dict['card'])
         rating = Rating(int(source_dict['rating']))
@@ -143,7 +144,7 @@ class AnkiSM2Scheduler:
                  easy_bonus: float = 1.3,
                  interval_modifier: float = 1.0,
                  hard_interval: float = 1.2,
-                 new_interval: float = 0.0):
+                 new_interval: float = 0.0) -> None:
         
         self.learning_steps = learning_steps
         self.graduating_interval = graduating_interval
@@ -157,7 +158,7 @@ class AnkiSM2Scheduler:
         self.hard_interval = hard_interval
         self.new_interval = new_interval
 
-    def review_card(self, card: Card, rating: Rating, review_datetime: datetime | None = None, review_duration: int | None = None):
+    def review_card(self, card: Card, rating: Rating, review_datetime: datetime | None = None, review_duration: int | None = None) -> tuple[Card, ReviewLog]:
 
         card = deepcopy(card)
 
@@ -167,6 +168,8 @@ class AnkiSM2Scheduler:
         review_log = ReviewLog(card=card, rating=rating, review_datetime=review_datetime, review_duration=review_duration)
 
         if card.state == State.Learning:
+
+            assert type(card.step) == int # mypy
 
             if rating == Rating.Again:
 
@@ -210,6 +213,9 @@ class AnkiSM2Scheduler:
         elif card.state == State.Review:
 
             # TODO: add fuzz
+
+            assert type(card.ease) == float # mypy
+            assert type(card.current_interval) == int # mypy
 
             if rating == Rating.Again:
 
@@ -256,6 +262,10 @@ class AnkiSM2Scheduler:
 
         elif card.state == State.Relearing:
 
+            assert type(card.step) == int # mypy
+            assert type(card.current_interval) == int # mypy
+            assert type(card.ease) == float # mypy
+
             if rating == Rating.Again:
 
                 card.step = 0
@@ -298,7 +308,7 @@ class AnkiSM2Scheduler:
 
         return card, review_log
     
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         
         return_dict = {
             "learning_steps": [int(learning_step.total_seconds()) for learning_step in self.learning_steps],
@@ -317,7 +327,7 @@ class AnkiSM2Scheduler:
         return return_dict
 
     @staticmethod
-    def from_dict(source_dict):
+    def from_dict(source_dict: dict[str, Any]):
         
         learning_steps = [timedelta(seconds=learning_step) for learning_step in source_dict['learning_steps']]
         graduating_interval = source_dict['graduating_interval']
