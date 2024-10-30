@@ -86,19 +86,22 @@ class ReviewLog:
     card: Card
     rating: Rating
     review_datetime: datetime
+    review_duration: Optional[int]
 
-    def __init__(self, card: Card, rating: Rating, review_datetime: datetime) -> None:
+    def __init__(self, card: Card, rating: Rating, review_datetime: datetime, review_duration: Optional[int]=None) -> None:
 
         self.card = deepcopy(card)
         self.rating = rating
         self.review_datetime = review_datetime
+        self.review_duration = review_duration
 
     def to_dict(self):
 
         return_dict = {
             "card": self.card.to_dict(),
             "rating": self.rating.value,
-            "review_datetime": self.review_datetime.isoformat()
+            "review_datetime": self.review_datetime.isoformat(),
+            "review_duration": self.review_duration,
         }
 
         return return_dict
@@ -109,8 +112,9 @@ class ReviewLog:
         card = Card.from_dict(source_dict['card'])
         rating = Rating(int(source_dict['rating']))
         review_datetime = datetime.fromisoformat(source_dict['review_datetime'])
+        review_duration = source_dict['review_duration']
 
-        return ReviewLog(card=card, rating=rating, review_datetime=review_datetime)
+        return ReviewLog(card=card, rating=rating, review_datetime=review_datetime, review_duration=review_duration)
 
 
 class AnkiSM2Scheduler:
@@ -154,14 +158,14 @@ class AnkiSM2Scheduler:
         self.hard_interval = hard_interval
         self.new_interval = new_interval
 
-    def review_card(self, card: Card, rating: Rating, review_datetime: Optional[datetime]=None):
+    def review_card(self, card: Card, rating: Rating, review_datetime: Optional[datetime]=None, review_duration: Optional[int]=None):
 
         card = deepcopy(card)
 
         if review_datetime is None:
             review_datetime = datetime.now(timezone.utc)
 
-        review_log = ReviewLog(card=card, rating=rating, review_datetime=review_datetime)
+        review_log = ReviewLog(card=card, rating=rating, review_datetime=review_datetime, review_duration=review_duration)
 
         if card.state == State.Learning:
 
