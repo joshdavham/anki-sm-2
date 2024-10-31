@@ -1,15 +1,33 @@
+"""
+anki_sm_2.anki_sm_2
+
+This module defines each of the classes used in the anki-sm-2 package.
+
+Classes:
+    State: Enum representing the learning state of a Card object.
+    Rating: Enum representing the four possible Anki ratings when reviewing a card.
+    Card: Represents a flashcard in the Anki system.
+    AnkiSM2Scheduler: The Anki SM-2 scheduler.
+"""
+
 from enum import IntEnum
 from datetime import datetime, timezone, timedelta
 from copy import deepcopy
 from typing import Any
 
 class State(IntEnum):
+    """
+    Enum representing the learning state of a Card object.
+    """
 
     Learning = 1
     Review = 2
     Relearing = 3
 
 class Rating(IntEnum):
+    """
+    Enum representing the four possible Anki ratings when reviewing a card.
+    """
 
     Again = 1 # incorrect
     Hard = 2 # correct - had doubts about answer/or took long time to recall
@@ -17,6 +35,18 @@ class Rating(IntEnum):
     Easy = 4 # correct - recalled effortlessly
 
 class Card:
+    """
+    Represents a flashcard in the Anki system.
+
+    Attributes:
+        card_id (int): The id of the card. Defaults to the epoch miliseconds of when the card was created.
+        state (State): The card's current learning state.
+        step (int | None): The card's current learning or relearning step or None if the card is in the Review state.
+        ease (float | None): The card's current ease factor or None if the card is still in the Learning state.
+        due (datetime): When the card is due for review.
+        current_interval (int | None): The card's current interval length in days or None if the card is still in the Learning state.
+                                       Note that when a card is lapsed, its current_interval is preserved through the relearning steps.
+    """
     
     card_id: int
     state: State
@@ -82,6 +112,15 @@ class Card:
         return Card(card_id=card_id, state=state, step=step, ease=ease, due=due, current_interval=current_interval)
 
 class ReviewLog:
+    """
+    Represents the log entry of a Card object that has been reviewed.
+    
+    Attributes:
+        card (Card): Copy of the card object that was reviewed.
+        rating (Rating): The rating given to the card during the review.
+        review_datetime (datetime): The date and time of the review.
+        review_duration (int | None): The number of miliseconds it took to review the card or None if unspecified.
+    """
     
     card: Card
     rating: Rating
@@ -118,6 +157,24 @@ class ReviewLog:
 
 
 class AnkiSM2Scheduler:
+    """
+    The Anki SM-2 scheduler.
+
+    Enables the reviewing and future scheduling of cards according to the SM-2 based Anki scheduling algorithm.
+
+    Attributes:
+        learning_steps (list[timedelta]): Small time intervals that schedule cards in the Learning state.
+        graduating_interval (int): The number of days to wait before showing a card again, after the Good button is pressed on the final learning step.
+        easy_interval (int): The number of days to wait before showing a card again, after the Easy button is used to immediately remove a card from learning.
+        relearning_steps (list[timedelta]): Small time intervals that schedule cards in the Relearning state.
+        minimum_interval (int): The minimum interval (in days) given to a review card after answering Again.
+        maximum_interval (int): The maximum number of days a Review-state card can be scheduled into the future.
+        starting_ease (float): The initial ease factor given to cards that have completed the learning steps and become a Review-state card.
+        easy_bonus (float): An extra multiplier that is applied to a review card's interval when you rate it Easy.
+        interval_modifier (float): A factor used as a multiplier to determine future review interval lengths. It is used on Review-state cards and Relearning-state cards about to graduate the relearning steps.
+        hard_interval (float): The multiplier applied to a review interval when answering Hard.
+        new_interval (float): The multiplier applied to a review interval when answering Again.
+    """
     
     learning_steps: list[timedelta]
     graduating_interval: int
@@ -159,6 +216,18 @@ class AnkiSM2Scheduler:
         self.new_interval = new_interval
 
     def review_card(self, card: Card, rating: Rating, review_datetime: datetime | None = None, review_duration: int | None = None) -> tuple[Card, ReviewLog]:
+        """
+        Reviews a card with a given rating at a specified time and duration.
+
+        Args:
+            card (Card): The card being reviewed.
+            rating (Rating): The chosen rating for the card being reviewed.
+            review_datetime (datetime | None): The date and time of the review. If unspecified, the date and time will be the current time in UTC.
+            review_duration (int | None): The number of miliseconds it took to review the card or None if unspecified.
+
+        Returns:
+            tuple: A tuple containing the updated, reviewed card and its corresponding review log.
+        """
 
         card = deepcopy(card)
 
