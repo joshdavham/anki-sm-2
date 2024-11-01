@@ -101,13 +101,15 @@ card, review_log = scheduler.review_card(card=card, rating=Rating.Good, review_d
 
 ### Serialization
 
-`Card` and `ReviewLog` objects are json-serializable via their `to_dict` and `from_dict` methods for easy database storage:
+`AnkiSM2Scheduler`, `Card` and `ReviewLog` objects are all json-serializable via their `to_dict` and `from_dict` methods for easy database storage:
 ```python
 # serialize before storage
+scheduler_dict = scheduler.to_dict()
 card_dict = card.to_dict()
 review_log_dict = review_log.to_dict()
 
 # deserialize from dict
+scheduler = AnkiSM2Scheduler.from_dict(scheduler_dict)
 card = Card.from_dict(card_dict)
 review_log = ReviewLog.from_dict(review_log_dict)
 ```
