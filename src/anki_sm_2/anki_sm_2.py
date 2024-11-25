@@ -14,6 +14,8 @@ from enum import IntEnum
 from datetime import datetime, timezone, timedelta
 from copy import deepcopy
 from typing import Any
+import math
+import random
 
 class State(IntEnum):
     """
@@ -281,8 +283,6 @@ class AnkiSM2Scheduler:
 
         elif card.state == State.Review:
 
-            # TODO: add fuzz
-
             assert type(card.ease) == float # mypy
             assert type(card.current_interval) == int # mypy
 
@@ -291,13 +291,15 @@ class AnkiSM2Scheduler:
                 card.state = State.Relearing
                 card.step = 0
                 card.ease = max(1.3, card.ease * 0.80) # reduce ease by 20%
-                card.current_interval = max( self.minimum_interval, round(card.current_interval * self.new_interval * self.interval_modifier) )
+                current_interval = max( self.minimum_interval, round(card.current_interval * self.new_interval * self.interval_modifier) )
+                card.current_interval = self._get_fuzzed_interval(current_interval)
                 card.due = review_datetime + timedelta(days=card.current_interval)
 
             elif rating == Rating.Hard:
 
                 card.ease = max(1.3, card.ease * 0.85) # reduce ease by 15%
-                card.current_interval = min( self.maximum_interval, round(card.current_interval * self.hard_interval * self.interval_modifier) )
+                current_interval = min( self.maximum_interval, round(card.current_interval * self.hard_interval * self.interval_modifier) )
+                card.current_interval = self._get_fuzzed_interval(current_interval)
                 card.due = review_datetime + timedelta(days=card.current_interval)
 
             elif rating == Rating.Good:
@@ -307,11 +309,13 @@ class AnkiSM2Scheduler:
                 days_overdue = (review_datetime - card.due).days
                 if days_overdue >= 1:
 
-                    card.current_interval = min( self.maximum_interval, round(( card.current_interval + (days_overdue / 2.0) ) * card.ease * self.interval_modifier) )
+                    current_interval = min( self.maximum_interval, round(( card.current_interval + (days_overdue / 2.0) ) * card.ease * self.interval_modifier) )
 
                 else:
 
-                    card.current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.interval_modifier) )
+                    current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.interval_modifier) )
+
+                card.current_interval = self._get_fuzzed_interval(current_interval)
 
                 card.due = review_datetime + timedelta(days=card.current_interval)
 
@@ -320,11 +324,13 @@ class AnkiSM2Scheduler:
                 days_overdue = (review_datetime - card.due).days
                 if days_overdue >= 1:
 
-                    card.current_interval = min( self.maximum_interval, round(( card.current_interval + days_overdue ) * card.ease * self.easy_bonus * self.interval_modifier) )
+                    current_interval = min( self.maximum_interval, round(( card.current_interval + days_overdue ) * card.ease * self.easy_bonus * self.interval_modifier) )
 
                 else:
 
-                    card.current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.easy_bonus * self.interval_modifier) )
+                    current_interval = min( self.maximum_interval, round(card.current_interval * card.ease * self.easy_bonus * self.interval_modifier) )
+
+                card.current_interval = self._get_fuzzed_interval(current_interval)
 
                 card.ease = card.ease * 1.15 # increase ease by 15%
                 card.due = review_datetime + timedelta(days=card.current_interval)
@@ -376,6 +382,67 @@ class AnkiSM2Scheduler:
 
 
         return card, review_log
+    
+    def _get_fuzzed_interval(self, interval: int) -> int:
+        """
+        Takes the current calculated interval and adds a small amount of random fuzz to it.
+        For example, a card that would've been due in 50 days, after fuzzing, might be due in 49, or 51 days.
+
+        Args:
+            interval (int): The calculated next interval, before fuzzing.
+
+        Returns:
+            int: The new interval, after fuzzing.
+        """
+
+        if interval < 2.5: # fuzz is not applied to intervals less than 2.5
+            return interval
+        
+        def _get_fuzz_range(interval: int) -> tuple[int, int]:
+            """
+            Helper function that computes the possible upper and lower bounds of the interval after fuzzing.
+            """
+        
+            FUZZ_RANGES = [
+                {
+                    "start": 2.5,
+                    "end": 7.0,
+                    "factor": 0.15,
+                },
+                {
+                    "start": 7.0,
+                    "end": 20.0,
+                    "factor": 0.1,
+                },
+                {
+                    "start": 20.0,
+                    "end": math.inf,
+                    "factor": 0.05,
+                },
+            ]
+            
+            delta = 1.0
+            for fuzz_range in FUZZ_RANGES:
+                
+                delta += fuzz_range["factor"] * max( min(interval, fuzz_range["end"]) - fuzz_range["start"], 0.0 )
+            
+            min_ivl = int(round(interval - delta))
+            max_ivl = int(round(interval + delta))
+
+            # make sure the min_ivl and max_ivl fall into a valid range
+            min_ivl = max(2, min_ivl)
+            max_ivl = min(max_ivl, self.maximum_interval)
+            min_ivl = min(min_ivl, max_ivl)
+            
+            return min_ivl, max_ivl
+
+        min_ivl, max_ivl = _get_fuzz_range(interval)
+
+        fuzzed_interval = ( random.random() * (max_ivl - min_ivl + 1) ) + min_ivl # the next interval is a random value between min_ivl and max_ivl
+
+        fuzzed_interval = min( round(fuzzed_interval), self.maximum_interval )
+
+        return fuzzed_interval
     
     def to_dict(self) -> dict[str, Any]:
         
