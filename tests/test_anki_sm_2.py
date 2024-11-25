@@ -2,6 +2,7 @@ from datetime import datetime, timezone, timedelta
 from anki_sm_2 import AnkiSM2Scheduler, Card, Rating, ReviewLog, State
 import json
 from copy import deepcopy
+import random
 
 class TestAnkiSM2:
 
@@ -195,3 +196,37 @@ class TestAnkiSM2:
         # can use the review log to recreate the card that was reviewed
         assert old_card.to_dict() == Card.from_dict(review_log.to_dict()['card']).to_dict()
         assert card.to_dict() != old_card.to_dict()
+
+    def test_fuzz(self):
+        """
+        Reviews a new card Good four times in a row with different random seeds.
+        The size of the interval after the fourth review should be different.
+        """
+
+        scheduler = AnkiSM2Scheduler()
+
+        # seed 1
+        random.seed(42)
+
+        card = Card()
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc))
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=card.due)
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=card.due)
+        prev_due = card.due
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=card.due)
+        interval = card.due - prev_due 
+
+        assert interval.days == 6
+
+        # seed 2
+        random.seed(12345)
+
+        card = Card()
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc))
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=card.due)
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=card.due)
+        prev_due = card.due
+        card, _ = scheduler.review_card(card=card, rating=Rating.Good, review_datetime=card.due)
+        interval = card.due - prev_due 
+
+        assert interval.days == 5
