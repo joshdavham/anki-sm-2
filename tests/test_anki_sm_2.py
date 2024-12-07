@@ -31,7 +31,7 @@ class TestAnkiSM2:
             card=card, rating=rating, review_datetime=card.due
         )
         assert card.state == State.Review
-        assert card.step == None
+        assert card.step is None
         assert round((card.due - created_at).total_seconds() / 3600) == 24
 
     def test_again_learning_steps(self):
@@ -89,7 +89,7 @@ class TestAnkiSM2:
         )
 
         assert card.state == State.Review
-        assert card.step == None
+        assert card.step is None
         assert (
             round((card.due - created_at).total_seconds() / 86400) == 4
         )  # card is due in approx. 4 days
@@ -110,7 +110,7 @@ class TestAnkiSM2:
         )
 
         assert card.state == State.Review
-        assert card.step == None
+        assert card.step is None
 
         prev_due = card.due
         rating = Rating.Good
@@ -192,7 +192,7 @@ class TestAnkiSM2:
         )
 
         assert card.state == State.Review
-        assert card.step == None
+        assert card.step is None
         assert card.current_interval == 2
         assert (
             round((card.due - prev_due).total_seconds() / 3600) == 48
@@ -307,7 +307,6 @@ class TestAnkiSM2:
 
         assert len(scheduler.relearning_steps) == 0
 
-        created_at = datetime.now(timezone.utc)
         card = Card()
         card, _ = scheduler.review_card(
             card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc)
