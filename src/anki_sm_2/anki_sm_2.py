@@ -272,53 +272,72 @@ class Scheduler:
         if card.state == State.Learning:
             assert type(card.step) == int  # mypy
 
-            if rating == Rating.Again:
-                card.step = 0
-                card.due = review_datetime + self.learning_steps[card.step]
-
-            elif rating == Rating.Hard:
-                # card step stays the same
-
-                if card.step == 0 and len(self.learning_steps) == 1:
-                    card.due = review_datetime + (self.learning_steps[card.step] * 1.5)
-                elif card.step == 0 and len(self.learning_steps) >= 2:
-                    card.due = review_datetime + (
-                        (
-                            self.learning_steps[card.step]
-                            + self.learning_steps[card.step + 1]
-                        )
-                        / 2.0
-                    )
-                else:
-                    card.due = review_datetime + self.learning_steps[card.step]
-
-            elif rating == Rating.Good:
-                if card.step + 1 == len(self.learning_steps):  # the last step
-                    card.state = State.Review
-                    card.step = None
-                    card.ease = self.starting_ease
-                    card.current_interval = self.graduating_interval
-                    card.due = review_datetime + timedelta(days=card.current_interval)
-
-                else:
-                    card.step += 1
-                    card.due = review_datetime + self.learning_steps[card.step]
-
-            elif rating == Rating.Easy:
+            # calculate the card's next interval
+            # len(self.learning_steps) == 0: no learning steps defined so move card to Review state
+            # card.step > len(self.learning_steps): handles the edge-case when a card was originally scheduled with a scheduler with more
+            # learning steps than the current scheduler
+            if len(self.learning_steps) == 0 or card.step > len(self.learning_steps):
                 card.state = State.Review
                 card.step = None
                 card.ease = self.starting_ease
-                card.current_interval = self.easy_interval
+                card.current_interval = self.graduating_interval
                 card.due = review_datetime + timedelta(days=card.current_interval)
+
+            else:
+
+                if rating == Rating.Again:
+                    card.step = 0
+                    card.due = review_datetime + self.learning_steps[card.step]
+
+                elif rating == Rating.Hard:
+                    # card step stays the same
+
+                    if card.step == 0 and len(self.learning_steps) == 1:
+                        card.due = review_datetime + (self.learning_steps[card.step] * 1.5)
+                    elif card.step == 0 and len(self.learning_steps) >= 2:
+                        card.due = review_datetime + (
+                            (
+                                self.learning_steps[card.step]
+                                + self.learning_steps[card.step + 1]
+                            )
+                            / 2.0
+                        )
+                    else:
+                        card.due = review_datetime + self.learning_steps[card.step]
+
+                elif rating == Rating.Good:
+                    if card.step + 1 == len(self.learning_steps):  # the last step
+                        card.state = State.Review
+                        card.step = None
+                        card.ease = self.starting_ease
+                        card.current_interval = self.graduating_interval
+                        card.due = review_datetime + timedelta(days=card.current_interval)
+
+                    else:
+                        card.step += 1
+                        card.due = review_datetime + self.learning_steps[card.step]
+
+                elif rating == Rating.Easy:
+                    card.state = State.Review
+                    card.step = None
+                    card.ease = self.starting_ease
+                    card.current_interval = self.easy_interval
+                    card.due = review_datetime + timedelta(days=card.current_interval)
 
         elif card.state == State.Review:
             assert type(card.ease) == float  # mypy
             assert type(card.current_interval) == int  # mypy
 
             if rating == Rating.Again:
-                card.state = State.Relearning
-                card.step = 0
+
                 card.ease = max(1.3, card.ease * 0.80)  # reduce ease by 20%
+
+                # if there are no relearning steps (they were left blank)
+                if len(self.relearning_steps) > 0:
+
+                    card.state = State.Relearning
+                    card.step = 0
+
                 current_interval = max(
                     self.minimum_interval,
                     round(
@@ -403,59 +422,78 @@ class Scheduler:
             assert type(card.current_interval) == int  # mypy
             assert type(card.ease) == float  # mypy
 
-            if rating == Rating.Again:
-                card.step = 0
-                card.due = review_datetime + self.relearning_steps[card.step]
+            # calculate the card's next interval
+            # len(self.relearning_steps) == 0: no relearning steps defined so move card to Review state
+            # card.step > len(self.relearning_steps): handles the edge-case when a card was originally scheduled with a scheduler with more
+            # relearning steps than the current scheduler
+            if len(self.relearning_steps) == 0 or card.step > len(self.relearning_steps):
+                card.state = State.Review
+                card.step = None
 
-            elif rating == Rating.Hard:
-                # card step stays the same
+                # don't update ease
+                card.current_interval = min(
+                    self.maximum_interval,
+                    round(
+                        card.current_interval * card.ease * self.interval_modifier
+                    ),
+                )
+                card.due = review_datetime + timedelta(days=card.current_interval)
 
-                if card.step == 0 and len(self.relearning_steps) == 1:
-                    card.due = review_datetime + (
-                        self.relearning_steps[card.step] * 1.5
-                    )
-                elif card.step == 0 and len(self.relearning_steps) >= 2:
-                    card.due = review_datetime + (
-                        (
-                            self.relearning_steps[card.step]
-                            + self.relearning_steps[card.step + 1]
-                        )
-                        / 2.0
-                    )
-                else:
+            else:
+
+                if rating == Rating.Again:
+                    card.step = 0
                     card.due = review_datetime + self.relearning_steps[card.step]
 
-            elif rating == Rating.Good:
-                if card.step + 1 == len(self.relearning_steps):  # the last step
+                elif rating == Rating.Hard:
+                    # card step stays the same
+
+                    if card.step == 0 and len(self.relearning_steps) == 1:
+                        card.due = review_datetime + (
+                            self.relearning_steps[card.step] * 1.5
+                        )
+                    elif card.step == 0 and len(self.relearning_steps) >= 2:
+                        card.due = review_datetime + (
+                            (
+                                self.relearning_steps[card.step]
+                                + self.relearning_steps[card.step + 1]
+                            )
+                            / 2.0
+                        )
+                    else:
+                        card.due = review_datetime + self.relearning_steps[card.step]
+
+                elif rating == Rating.Good:
+                    if card.step + 1 == len(self.relearning_steps):  # the last step
+                        card.state = State.Review
+                        card.step = None
+                        # don't update ease
+                        card.current_interval = min(
+                            self.maximum_interval,
+                            round(
+                                card.current_interval * card.ease * self.interval_modifier
+                            ),
+                        )
+                        card.due = review_datetime + timedelta(days=card.current_interval)
+
+                    else:
+                        card.step += 1
+                        card.due = review_datetime + self.relearning_steps[card.step]
+
+                elif rating == Rating.Easy:
                     card.state = State.Review
                     card.step = None
                     # don't update ease
                     card.current_interval = min(
                         self.maximum_interval,
                         round(
-                            card.current_interval * card.ease * self.interval_modifier
+                            card.current_interval
+                            * card.ease
+                            * self.easy_bonus
+                            * self.interval_modifier
                         ),
                     )
                     card.due = review_datetime + timedelta(days=card.current_interval)
-
-                else:
-                    card.step += 1
-                    card.due = review_datetime + self.relearning_steps[card.step]
-
-            elif rating == Rating.Easy:
-                card.state = State.Review
-                card.step = None
-                # don't update ease
-                card.current_interval = min(
-                    self.maximum_interval,
-                    round(
-                        card.current_interval
-                        * card.ease
-                        * self.easy_bonus
-                        * self.interval_modifier
-                    ),
-                )
-                card.due = review_datetime + timedelta(days=card.current_interval)
 
         return card, review_log
 

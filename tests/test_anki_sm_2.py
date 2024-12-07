@@ -286,3 +286,128 @@ class TestAnkiSM2:
         interval = card.due - prev_due
 
         assert interval.days == 5
+
+    def test_no_learning_steps(self):
+        scheduler = Scheduler(learning_steps=())
+
+        assert len(scheduler.learning_steps) == 0
+
+        created_at = datetime.now(timezone.utc)
+        card = Card()
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Again, review_datetime=datetime.now(timezone.utc)
+        )
+
+        assert card.state == State.Review
+        interval = (card.due - created_at).days
+        assert interval >= 1
+
+    def test_no_relearning_steps(self):
+        scheduler = Scheduler(relearning_steps=())
+
+        assert len(scheduler.relearning_steps) == 0
+
+        created_at = datetime.now(timezone.utc)
+        card = Card()
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Learning
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Good, review_datetime=card.due
+        )
+        assert card.state == State.Review
+        last_review = card.due
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Again, review_datetime=card.due
+        )
+        assert card.state == State.Review
+
+        interval = (card.due - last_review).days
+        assert interval >= 1
+
+    def test_one_card_multiple_schedulers(self):
+        scheduler_with_two_learning_steps = Scheduler(
+            learning_steps=(timedelta(minutes=1), timedelta(minutes=10))
+        )
+        scheduler_with_no_learning_steps = Scheduler(learning_steps=())
+
+        card = Card()
+
+        assert len(scheduler_with_two_learning_steps.learning_steps) == 2
+        card, _ = scheduler_with_two_learning_steps.review_card(
+            card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Learning
+        assert card.step == 1
+
+        assert len(scheduler_with_no_learning_steps.learning_steps) == 0
+        card, _ = scheduler_with_no_learning_steps.review_card(
+            card=card, rating=Rating.Again, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Review
+        assert card.step is None
+
+        scheduler_with_two_relearning_steps = Scheduler(
+            relearning_steps=(
+                timedelta(minutes=1),
+                timedelta(minutes=10),
+                timedelta(minutes=15),
+            )
+        )
+        scheduler_with_no_relearning_steps = Scheduler(relearning_steps=())
+
+        assert len(scheduler_with_two_relearning_steps.relearning_steps) == 3
+        card, _ = scheduler_with_two_relearning_steps.review_card(
+            card=card, rating=Rating.Again, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Relearning
+        assert card.step == 0
+
+        card, _ = scheduler_with_two_relearning_steps.review_card(
+            card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Relearning
+        assert card.step == 1
+
+        card, _ = scheduler_with_two_relearning_steps.review_card(
+            card=card, rating=Rating.Good, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Relearning
+        assert card.step == 2
+
+        card, _ = scheduler_with_no_relearning_steps.review_card(
+            card=card, rating=Rating.Again, review_datetime=datetime.now(timezone.utc)
+        )
+        assert card.state == State.Review
+        assert card.step is None
+
+    def test_maximum_interval(self):
+        maximum_interval = 100
+        scheduler = Scheduler(maximum_interval=maximum_interval)
+
+        card = Card()
+
+        last_review = card.due
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Easy, review_datetime=card.due
+        )
+        assert (card.due - last_review).days <= scheduler.maximum_interval
+
+        last_review = card.due
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Good, review_datetime=card.due
+        )
+        assert (card.due - last_review).days <= scheduler.maximum_interval
+
+        last_review = card.due
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Easy, review_datetime=card.due
+        )
+        assert (card.due - last_review).days <= scheduler.maximum_interval
+
+        last_review = card.due
+        card, _ = scheduler.review_card(
+            card=card, rating=Rating.Good, review_datetime=card.due
+        )
+        assert (card.due - last_review).days <= scheduler.maximum_interval
