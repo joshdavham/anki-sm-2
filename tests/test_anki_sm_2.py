@@ -9,8 +9,8 @@ class TestAnkiSM2:
     def test_good_learning_steps(self):
         scheduler = Scheduler()
 
-        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
-        card = Card(created_at=created_at)
+        created_at = datetime.now(timezone.utc)
+        card = Card()
 
         assert card.state == State.Learning
         assert card.step == 0
@@ -37,8 +37,8 @@ class TestAnkiSM2:
     def test_again_learning_steps(self):
         scheduler = Scheduler()
 
-        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
-        card = Card(created_at=created_at)
+        created_at = datetime.now(timezone.utc)
+        card = Card()
 
         assert card.state == State.Learning
         assert card.step == 0
@@ -57,8 +57,8 @@ class TestAnkiSM2:
     def test_hard_learning_steps(self):
         scheduler = Scheduler()
 
-        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
-        card = Card(created_at=created_at)
+        created_at = datetime.now(timezone.utc)
+        card = Card()
 
         assert card.state == State.Learning
         assert card.step == 0
@@ -77,8 +77,8 @@ class TestAnkiSM2:
     def test_easy_learning_steps(self):
         scheduler = Scheduler()
 
-        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
-        card = Card(created_at=created_at)
+        created_at = datetime.now(timezone.utc)
+        card = Card()
 
         assert card.state == State.Learning
         assert card.step == 0
@@ -97,8 +97,7 @@ class TestAnkiSM2:
     def test_review_state(self):
         scheduler = Scheduler()
 
-        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
-        card = Card(created_at=created_at)
+        card = Card()
 
         rating = Rating.Good
         card, review_log = scheduler.review_card(
@@ -141,8 +140,7 @@ class TestAnkiSM2:
     def test_relearning(self):
         scheduler = Scheduler()
 
-        created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
-        card = Card(created_at=created_at)
+        card = Card()
 
         rating = Rating.Good
         card, review_log = scheduler.review_card(

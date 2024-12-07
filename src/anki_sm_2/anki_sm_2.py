@@ -62,7 +62,6 @@ class Card:
 
     def __init__(
         self,
-        created_at: datetime | None = None,
         card_id: int | None = None,
         state: State = State.Learning,
         step: int | None = None,
@@ -70,11 +69,9 @@ class Card:
         due: datetime | None = None,
         current_interval: int | None = None,
     ) -> None:
-        if created_at is None:
-            created_at = datetime.now(timezone.utc)
-
         if card_id is None:
-            card_id = int(created_at.timestamp() * 1000)
+            # epoch miliseconds of when the card was created
+            card_id = int(datetime.now(timezone.utc).timestamp() * 1000)
         self.card_id = card_id
 
         self.state = state
@@ -86,7 +83,7 @@ class Card:
         self.ease = ease
 
         if due is None:
-            due = created_at
+            due = datetime.now(timezone.utc)
         self.due = due
 
         self.current_interval = current_interval
