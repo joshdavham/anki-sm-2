@@ -328,15 +328,9 @@ class Scheduler:
             assert type(card.ease) == float  # mypy
             assert type(card.current_interval) == int  # mypy
 
-            if rating == Rating.Again:
+            if rating == Rating.Again: # the card is "lapsed"
 
                 card.ease = max(1.3, card.ease * 0.80)  # reduce ease by 20%
-
-                # if there are no relearning steps (they were left blank)
-                if len(self.relearning_steps) > 0:
-
-                    card.state = State.Relearning
-                    card.step = 0
 
                 current_interval = max(
                     self.minimum_interval,
@@ -347,7 +341,18 @@ class Scheduler:
                     ),
                 )
                 card.current_interval = self._get_fuzzed_interval(current_interval)
-                card.due = review_datetime + timedelta(days=card.current_interval)
+
+                # if there are no relearning steps (they were left blank)
+                if len(self.relearning_steps) > 0:
+
+                    card.state = State.Relearning
+                    card.step = 0
+
+                    card.due = review_datetime + self.relearning_steps[card.step]
+
+                else:
+
+                    card.due = review_datetime + timedelta(days=card.current_interval)
 
             elif rating == Rating.Hard:
                 card.ease = max(1.3, card.ease * 0.85)  # reduce ease by 15%
