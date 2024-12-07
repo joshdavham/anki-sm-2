@@ -24,7 +24,7 @@ class State(IntEnum):
 
     Learning = 1
     Review = 2
-    Relearing = 3
+    Relearning = 3
 
 class Rating(IntEnum):
     """
@@ -288,7 +288,7 @@ class AnkiSM2Scheduler:
 
             if rating == Rating.Again:
 
-                card.state = State.Relearing
+                card.state = State.Relearning
                 card.step = 0
                 card.ease = max(1.3, card.ease * 0.80) # reduce ease by 20%
                 current_interval = max( self.minimum_interval, round(card.current_interval * self.new_interval * self.interval_modifier) )
@@ -335,7 +335,7 @@ class AnkiSM2Scheduler:
                 card.ease = card.ease * 1.15 # increase ease by 15%
                 card.due = review_datetime + timedelta(days=card.current_interval)
 
-        elif card.state == State.Relearing:
+        elif card.state == State.Relearning:
 
             assert type(card.step) == int # mypy
             assert type(card.current_interval) == int # mypy

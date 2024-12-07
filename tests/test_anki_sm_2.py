@@ -112,7 +112,7 @@ class TestAnkiSM2:
         rating = Rating.Again
         card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
 
-        assert card.state == State.Relearing
+        assert card.state == State.Relearning
         assert card.current_interval == 1
         assert round((card.due - prev_due).total_seconds() / 3600) == 24 # card is due in 1 day
 
@@ -138,7 +138,7 @@ class TestAnkiSM2:
         rating = Rating.Again
         card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
 
-        assert card.state == State.Relearing
+        assert card.state == State.Relearning
         assert card.current_interval == 1
         assert card.step == 0
         assert round((card.due - prev_due).total_seconds() / 3600) == 24 # card is due in 1 day 
@@ -147,7 +147,7 @@ class TestAnkiSM2:
         rating = Rating.Again
         card, review_log = scheduler.review_card(card=card, rating=rating, review_datetime=card.due)
 
-        assert card.state == State.Relearing
+        assert card.state == State.Relearning
         assert card.current_interval == 1
         assert card.step == 0
         assert round((card.due - prev_due).total_seconds() / 100) == 6 # card is due in 10 minutes
