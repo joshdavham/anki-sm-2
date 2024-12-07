@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from anki_sm_2 import AnkiSM2Scheduler, Card, Rating, ReviewLog, State
+from anki_sm_2 import Scheduler, Card, Rating, ReviewLog, State
 import json
 from copy import deepcopy
 import random
@@ -8,7 +8,7 @@ class TestAnkiSM2:
 
     def test_good_learning_steps(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
         card = Card(created_at=created_at)
@@ -32,7 +32,7 @@ class TestAnkiSM2:
 
     def test_again_learning_steps(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
         card = Card(created_at=created_at)        
@@ -50,7 +50,7 @@ class TestAnkiSM2:
 
     def test_hard_learning_steps(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
         card = Card(created_at=created_at)    
@@ -68,7 +68,7 @@ class TestAnkiSM2:
 
     def test_easy_learning_steps(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
         card = Card(created_at=created_at)    
@@ -85,7 +85,7 @@ class TestAnkiSM2:
 
     def test_review_state(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
         card = Card(created_at=created_at)
@@ -118,7 +118,7 @@ class TestAnkiSM2:
 
     def test_relearning(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         created_at = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
         card = Card(created_at=created_at)
@@ -163,7 +163,7 @@ class TestAnkiSM2:
 
     def test_serialize(self):
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         card = Card()
         old_card = deepcopy(card)
@@ -179,7 +179,7 @@ class TestAnkiSM2:
 
         # scheduler can be serialized and de-serialized while remaining the same
         scheduler_dict = scheduler.to_dict()
-        copied_scheduler = AnkiSM2Scheduler.from_dict(scheduler_dict)
+        copied_scheduler = Scheduler.from_dict(scheduler_dict)
         assert vars(scheduler) == vars(copied_scheduler)
         assert scheduler.to_dict() == copied_scheduler.to_dict()
 
@@ -203,7 +203,7 @@ class TestAnkiSM2:
         The size of the interval after the fourth review should be different.
         """
 
-        scheduler = AnkiSM2Scheduler()
+        scheduler = Scheduler()
 
         # seed 1
         random.seed(42)

@@ -34,9 +34,9 @@ pip install anki-sm-2
 Import and initialize the Anki SM-2 Scheduler
 
 ```python
-from anki_sm_2 import AnkiSM2Scheduler, Card, Rating
+from anki_sm_2 import Scheduler, Card, Rating
 
-scheduler = AnkiSM2Scheduler()
+scheduler = Scheduler()
 ```
 
 Create a new Card object
@@ -85,10 +85,10 @@ print(f"Card due in {time_delta.seconds / 60} minutes")
 Anki SM-2 uses UTC time only. You can still specify custom datetimes, but they must be UTC.
 
 ```python
-from anki_sm_2 import AnkiSM2Scheduler, Card, Rating, ReviewLog
+from anki_sm_2 import Scheduler, Card, Rating, ReviewLog
 from datetime import datetime, timezone
 
-scheduler = AnkiSM2Scheduler()
+scheduler = Scheduler()
 
 # create a new card on Jan. 1, 2024
 card = Card(created_at=datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)) # right
@@ -101,7 +101,7 @@ card, review_log = scheduler.review_card(card=card, rating=Rating.Good, review_d
 
 ### Serialization
 
-`AnkiSM2Scheduler`, `Card` and `ReviewLog` objects are all json-serializable via their `to_dict` and `from_dict` methods for easy database storage:
+`Scheduler`, `Card` and `ReviewLog` objects are all json-serializable via their `to_dict` and `from_dict` methods for easy database storage:
 ```python
 # serialize before storage
 scheduler_dict = scheduler.to_dict()
@@ -109,7 +109,7 @@ card_dict = card.to_dict()
 review_log_dict = review_log.to_dict()
 
 # deserialize from dict
-scheduler = AnkiSM2Scheduler.from_dict(scheduler_dict)
+scheduler = Scheduler.from_dict(scheduler_dict)
 card = Card.from_dict(card_dict)
 review_log = ReviewLog.from_dict(review_log_dict)
 ```

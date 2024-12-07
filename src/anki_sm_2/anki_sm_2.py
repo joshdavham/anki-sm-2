@@ -7,7 +7,7 @@ Classes:
     State: Enum representing the learning state of a Card object.
     Rating: Enum representing the four possible Anki ratings when reviewing a card.
     Card: Represents a flashcard in the Anki system.
-    AnkiSM2Scheduler: The Anki SM-2 scheduler.
+    Scheduler: The Anki SM-2 scheduler.
 """
 
 from enum import IntEnum
@@ -158,7 +158,7 @@ class ReviewLog:
         return ReviewLog(card=card, rating=rating, review_datetime=review_datetime, review_duration=review_duration)
 
 
-class AnkiSM2Scheduler:
+class Scheduler:
     """
     The Anki SM-2 scheduler.
 
@@ -463,7 +463,7 @@ class AnkiSM2Scheduler:
         return return_dict
 
     @staticmethod
-    def from_dict(source_dict: dict[str, Any]):
+    def from_dict(source_dict: dict[str, Any]) -> "Scheduler":
         
         learning_steps = [timedelta(seconds=learning_step) for learning_step in source_dict['learning_steps']]
         graduating_interval = source_dict['graduating_interval']
@@ -477,7 +477,7 @@ class AnkiSM2Scheduler:
         hard_interval = source_dict['hard_interval']
         new_interval = source_dict['new_interval']
 
-        return AnkiSM2Scheduler(
+        return Scheduler(
                     learning_steps = learning_steps,
                     graduating_interval = graduating_interval,
                     easy_interval = easy_interval,
