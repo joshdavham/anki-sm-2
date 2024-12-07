@@ -7,7 +7,7 @@
 </div>
 
 <div align="center">
-  <em>🌟 Anki's SM-2-based spaced repetition algorithm 🌟</em>
+  <em>🌟 Anki's legacy SM-2-based spaced repetition algorithm 🌟</em>
 </div>
 <br />
 <div align="center" style="text-decoration: none;">
