@@ -48,12 +48,10 @@ card = Card()
 Choose a rating and review the card
 
 ```python
-"""
-Rating.Again # (==0) forgot the card
-Rating.Hard # (==1) remembered the card, but with serious difficulty
-Rating.Good # (==2) remembered the card after a hesitation
-Rating.Easy # (==3) remembered the card easily
-"""
+# Rating.Again (==1) forgot the card
+# Rating.Hard (==2) remembered the card with serious difficulty
+# Rating.Good (==3) remembered the card after a hesitation
+# Rating.Easy (==4) remembered the card easily
 
 rating = Rating.Good
 
@@ -122,6 +120,12 @@ This python package is currently unstable and adheres to the following versionin
 - **Patch** version will increase when a bug is fixed, a new feature is added or when anything else backward compatible warrants a new release.
 
 Once this package is considered stable, the **Major** version will be bumped to 1.0.0 and will follow [semver](https://semver.org/).
+
+## Other SRS python packages
+
+- [FSRS](https://github.com/open-spaced-repetition/py-fsrs)
+- [SM-2](https://github.com/open-spaced-repetition/sm-2)
+- [Leitner System](https://github.com/open-spaced-repetition/leitner-box)
 
 ## Contribute
 
